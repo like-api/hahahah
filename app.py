@@ -1,20 +1,36 @@
-from flask import Flask, request, jsonify
+from http.server import BaseHTTPRequestHandler
+from urllib.parse import parse_qs, urlparse
+import json
 
-app = Flask(__name__)
-
-MY_SECRET_KEY = "my_secret_12345"
-
-@app.route('/like')
-def handle_like():
-    client_key = request.args.get('key')
-    uid = request.args.get('uid')
-    token = request.args.get('token')
-    
-    if client_key != MY_SECRET_KEY:
-        return jsonify({"error": "Invalid or missing API key", "status": 3}), 403
+class handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        parsed_path = urlparse(self.path)
+        query_params = parse_qs(parsed_path.query)
         
-    return jsonify({
-        "status": "success", 
-        "message": f"Successfully sent like to UID: {uid}"
-    })
-    
+        # এপিআই কি চেক
+        client_key = query_params.get('key', [None])[0]
+        uid = query_params.get('uid', [None])[0]
+        token = query_params.get('token', [None])[0]
+        
+        MY_SECRET_KEY = "my_secret_12345"
+        
+        if client_key != MY_SECRET_KEY:
+            self.send_response(403)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({"error": "Invalid or missing API key", "status": 3}).encode())
+            return
+            
+        # সফল রেসপন্স
+        response_data = {
+            "status": "success",
+            "message": f"Successfully sent like to UID: {uid}",
+            "used_token": token[:10] + "..." if token else None
+        }
+        
+        self.send_response(200)
+        self.send_header('Content-type', 'application/json')
+        self.end_headers()
+        self.wfile.write(json.dumps(response_data).encode())
+        return
+        
