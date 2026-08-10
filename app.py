@@ -7,7 +7,6 @@ class handler(BaseHTTPRequestHandler):
         parsed_path = urlparse(self.path)
         query_params = parse_qs(parsed_path.query)
         
-        # এপিআই কি চেক
         client_key = query_params.get('key', [None])[0]
         uid = query_params.get('uid', [None])[0]
         token = query_params.get('token', [None])[0]
@@ -21,11 +20,9 @@ class handler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps({"error": "Invalid or missing API key", "status": 3}).encode())
             return
             
-        # সফল রেসপন্স
         response_data = {
             "status": "success",
-            "message": f"Successfully sent like to UID: {uid}",
-            "used_token": token[:10] + "..." if token else None
+            "message": f"Successfully sent like to UID: {uid}"
         }
         
         self.send_response(200)
